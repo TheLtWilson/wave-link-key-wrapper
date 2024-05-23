@@ -2,6 +2,7 @@ from pynput import keyboard
 import json
 import websocket
 import time
+import os
 import sys
 import threading
 import logging
@@ -17,6 +18,9 @@ operation_id = 1
 stop_reconnect = False
 current_volume = None
 is_muted = None
+
+# Change working directory to script location
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 # Initialize logging
 logging.basicConfig(
