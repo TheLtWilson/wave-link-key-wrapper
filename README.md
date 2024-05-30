@@ -12,7 +12,14 @@ Elgato leaves a websocket open, currently on port 1824, that is intended to be u
 
 * You will need to have Elgato's Wave Link software installed for this to work. This script works as of the version: `1.10.1 (2293)`
 
-* Install the required dependencies with the command: `pip install -r requirements.txt`
+* A "nerd font" is required to properly display icons. I use [SpaceMono](https://github.com/ryanoasis/nerd-fonts/releases/download/v3.2.1/SpaceMono.zip), but you can change the font to one of your chosing here: [nerdfonts.com](https://nerdfonts.com)
+
+## Installation
+
+* Clone the repo with the command: `git clone https://github.com/TheLtWilson/wave-link-audio-wrapper`
+
+* In the cloned folder, install the required dependencies with the command: `pip install -r requirements.txt`
+
 
 ### Running the Script
 
@@ -27,6 +34,8 @@ I have the F13, F14, and F15 keys binded to a knob on my keyboard, as such the c
 | Knob Button       | F15           | Toggle Mute  |
 
 Once the script has been adjusted to your likings, you can simply run the script by opening it in your file manager and it will run in the background.
+
+You can run the script on startup by adding a shortcut to it in your `shell:startup` folder.
 
 > ℹ️ **Notice:** My script assumes you always want the script to be running, so if you want to close the script you will need to end the Python process or implement your own hotkey.
 
