@@ -14,7 +14,7 @@ Elgato leaves a websocket open, currently on port 1824, that is intended to be u
 
 * A "nerd font" is required to properly display icons. I use [SpaceMono](https://github.com/ryanoasis/nerd-fonts/releases/download/v3.2.1/SpaceMono.zip), but you can change the font to one of your chosing here: [nerdfonts.com](https://nerdfonts.com)
 
-## Installation
+### Installation
 
 * Clone the repo with the command: `git clone https://github.com/TheLtWilson/wave-link-audio-wrapper`
 
@@ -39,6 +39,6 @@ You can run the script on startup by adding a shortcut to it in your `shell:star
 
 > ℹ️ **Notice:** My script assumes you always want the script to be running, so if you want to close the script you will need to end the Python process or implement your own hotkey.
 
-### ⚠️ Handling Errors
+## ⚠️ Handling Errors
 
 Because the script is intended to run in the background without a terminal open, a log file is created in the directory where the script is located. This can be used to determine errors in the script, or get a gist of what the script is doing.
