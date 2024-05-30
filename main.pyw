@@ -3,7 +3,6 @@ import json
 import websocket
 import time
 import os
-import sys
 import threading
 import logging
 import tkinter as tk
@@ -15,7 +14,6 @@ websocket_url = "ws://127.0.0.1:1824"
 
 # Variables
 operation_id = 1
-stop_reconnect = False
 current_volume = None
 is_muted = None
 
@@ -38,23 +36,60 @@ root.withdraw()
 def on_message(ws, message):
     global current_volume, is_muted
     response = json.loads(message)
+    # Initial Volume Response
     if "result" in response:
         local_mixer = response["result"]["localMixer"]
         is_muted = local_mixer[0]
         current_volume = local_mixer[1]
         if current_volume is not None:
             logging.debug(f"Connection received current volume: {current_volume}")
+    # Mute Status
     elif "method" in response and response["method"] == "outputMuteChanged":
         is_muted = response["params"]["value"]
         logging.debug(f"Mute changed to: {is_muted}")
         if is_muted:
-            root.after(0, show_popup_message, "󰖁 Muted")
+            root.after(0, show_popup_message, f"󰖁 Muted ({current_volume})", "Output Volume")
         else:
-            root.after(0, show_popup_message, f"󰕾 Unmuted")
+            root.after(0, show_popup_message, f"󰕾 Unmuted ({current_volume})", "Output Volume")
+    # Input Volumes
+    elif "method" in response and response["method"] == "inputVolumeChanged":
+        # System Input Volume
+        if response["params"]["identifier"] == "PCM_OUT_01_V_00_SD2" and response["params"]["mixerID"] == "com.elgato.mix.local":
+            logging.debug(f"System volume changed to: {response['params']['value']}")
+            root.after(0, show_popup_message, f"󰕾 {response['params']['value']}", "System Volume")
+        # Music Input Volume
+        elif response["params"]["identifier"] == "PCM_OUT_01_V_02_SD3" and response["params"]["mixerID"] == "com.elgato.mix.local":
+            logging.debug(f"Music volume changed to: {response['params']['value']}")
+            root.after(0, show_popup_message, f"󰕾 {response['params']['value']}", "Music Volume")
+        # Browser Input Volume
+        elif response["params"]["identifier"] == "PCM_OUT_01_V_04_SD4" and response["params"]["mixerID"] == "com.elgato.mix.local":
+            logging.debug(f"Browser volume changed to: {response['params']['value']}")
+            root.after(0, show_popup_message, f"󰕾 {response['params']['value']}", "Browser Volume")
+        # Voice Chat Input Volume
+        elif response["params"]["identifier"] == "PCM_OUT_01_V_06_SD5" and response["params"]["mixerID"] == "com.elgato.mix.local":
+            logging.debug(f"Voice Chat volume changed to: {response['params']['value']}")
+            root.after(0, show_popup_message, f"󰕾 {response['params']['value']}", "Voice Chat Volume")
+        # SFX Input Volume
+        elif response["params"]["identifier"] == "PCM_OUT_01_V_08_SD6" and response["params"]["mixerID"] == "com.elgato.mix.local":
+            logging.debug(f"SFX volume changed to: {response['params']['value']}")
+            root.after(0, show_popup_message, f"󰕾 {response['params']['value']}", "SFX Volume")
+        # Game Input Volume
+        elif response["params"]["identifier"] == "PCM_OUT_01_V_10_SD7" and response["params"]["mixerID"] == "com.elgato.mix.local":
+            logging.debug(f"Game volume changed to: {response['params']['value']}")
+            root.after(0, show_popup_message, f"󰕾 {response['params']['value']}", "Game Volume")
+        # Aux 1 Input Volume
+        elif response["params"]["identifier"] == "PCM_OUT_01_V_12_SD8" and response["params"]["mixerID"] == "com.elgato.mix.local":
+            logging.debug(f"Aux 1 volume changed to: {response['params']['value']}")
+            root.after(0, show_popup_message, f"󰕾 {response['params']['value']}", "Aux 1 Volume")
+        # Aux 2 Input Volume
+        elif response["params"]["identifier"] == "PCM_OUT_01_V_14_SD9" and response["params"]["mixerID"] == "com.elgato.mix.local":
+            logging.debug(f"Aux 2 volume changed to: {response['params']['value']}")
+            root.after(0, show_popup_message, f"󰕾 {response['params']['value']}", "Aux 2 Volume")
+    # Output Volumes
     elif "method" in response and response["method"] == "outputVolumeChanged":
         current_volume = response["params"]["value"]
         logging.debug(f"Volume changed to: {current_volume}")
-        root.after(0, show_popup_message, f"󰕾 Volume: {current_volume}")
+        root.after(0, show_popup_message, f"󰕾 {current_volume}", "Output Volume")
 
 # WebSocket error handler
 def on_error(ws, error):
@@ -143,10 +178,10 @@ def toggle_mute():
         logging.error("Toggle mute was called, but the socket is closed")
 
 # Function to show volume popup
-def show_popup_message(message):
+def show_popup_message(message, label):
     popup = tk.Toplevel(root)
     popup.overrideredirect(True)
-    popup.geometry("200x50+859+949")  # 200x50 window, padded 100px from the top-left corner
+    popup.geometry("220x80+50+50")  # width x height, pos x + pos y
     popup.attributes("-topmost", True)  # Ensure the popup appears on top
     
     # Dark mode styles
@@ -158,8 +193,11 @@ def show_popup_message(message):
     inner_frame = tk.Frame(popup, bg=background_color, bd=1, relief="solid")
     inner_frame.pack(expand=True, fill="both", padx=2, pady=2)
     
-    label = tk.Label(inner_frame, text=str(message), font=("SpaceMono Nerd Font", 16), bg=background_color, fg=foreground_color)
-    label.pack(expand=True, fill="both", padx=10, pady=10)
+    type_label = tk.Label(inner_frame, text=str(label), font=("SpaceMono Nerd Font", 12), bg=background_color, fg=foreground_color)
+    vol_label = tk.Label(inner_frame, text=str(message), font=("SpaceMono Nerd Font", 16, "bold"), bg=background_color, fg=foreground_color)
+
+    type_label.pack(expand=True, fill="both")
+    vol_label.pack(expand=True, fill="both")
 
     popup.after(popup_duration, popup.destroy)
 
@@ -174,30 +212,15 @@ ws = websocket.WebSocketApp(
 
 # Function to reconnect WebSocket
 def reconnect():
-    if stop_reconnect:
-        return
-    else:
-        while True:
-            try:
-                logging.info("Attempting to reconnect to WebSocket")
-                ws.run_forever()
-                logging.info("Successfully reconnected to WebSocket")
-                break
-            except Exception as e:
-                logging.error(f"Failed to reconnect to WebSocket: {e}")
-                time.sleep(5)  # Wait before attempting to reconnect again
-
-# Example close function that you can implement
-# def close_script():
-#     logging.info("Script shut down received.")
-#     global stop_reconnect
-#     stop_reconnect = True
-#     try:
-#         ws.close()
-#         root.destroy()
-#         sys.exit()
-#     except Exception as e:
-#         logging.error(f"Error shutting down script: {e}")
+    while True:
+        try:
+            logging.info("Attempting to reconnect to WebSocket")
+            ws.run_forever()
+            logging.info("Successfully reconnected to WebSocket")
+            break
+        except Exception as e:
+            logging.error(f"Failed to reconnect to WebSocket: {e}")
+            time.sleep(5)  # Wait before attempting to reconnect again
 
 # Start WebSocket on separate thread
 def run_ws():
