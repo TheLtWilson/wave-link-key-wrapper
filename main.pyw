@@ -13,7 +13,6 @@ popup_duration = 2000
 websocket_url = "ws://127.0.0.1:1824"
 
 # Variables
-operation_id = 1
 current_volume = None
 is_muted = None
 
@@ -36,13 +35,20 @@ root.withdraw()
 def on_message(ws, message):
     global current_volume, is_muted
     response = json.loads(message)
-    # Initial Volume Response
+    # Operations without method key
     if "result" in response:
-        local_mixer = response["result"]["localMixer"]
-        is_muted = local_mixer[0]
-        current_volume = local_mixer[1]
-        if current_volume is not None:
-            logging.debug(f"Connection received current volume: {current_volume}")
+        # For initial volume
+        if "localMixer" in response["result"]:
+            local_mixer = response["result"]["localMixer"]
+            is_muted = local_mixer[0]
+            current_volume = local_mixer[1]
+            if current_volume is not None:
+                logging.debug(f"Connection received current volume: {current_volume}")
+        elif "outputs" in response["result"]:
+            available_outputs = response["result"]["outputs"]
+            selected_output = response["result"]["selectedOutput"]
+            logging.debug(f"Available outputs: {json.dumps(available_outputs)}")
+            logging.debug(f"Selected output: {json.dumps(selected_output)}")
     # Mute Status
     elif "method" in response and response["method"] == "outputMuteChanged":
         is_muted = response["params"]["value"]
@@ -90,6 +96,14 @@ def on_message(ws, message):
         current_volume = response["params"]["value"]
         logging.debug(f"Volume changed to: {current_volume}")
         root.after(0, show_popup_message, f"󰕾 {current_volume}", "Output Volume")
+    elif "method" in response and response["method"] == "selectedOutputChanged":
+        logging.debug(f"Output changed to identifier: {response['params']['value']}")
+        # For my specific setup these are the identifiers for my speakers and headphones
+        # You can find your identifiers by running the script and checking the logs for "available outputs" or "selected output"
+        if response["params"]["value"] == "HDAUDIO#FUNC_01&VEN_10EC&DEV_1168&SUBSYS_104387C5&REV_1001#5&32F1D1AA&0&0001#{6994AD04-93EF-11D0-A3CC-00A0C9223196}\\ELINEOUTWAVE":
+            root.after(0, show_popup_message, "󰓃 Speakers", "Output Changed")
+        elif response["params"]["value"] == "PCM_OUT_01_C_00_SD1":
+            root.after(0, show_popup_message, " Headphones", "Output Changed")
 
 # WebSocket error handler
 def on_error(ws, error):
@@ -103,24 +117,56 @@ def on_close(ws, close_status_code, close_msg):
 # WebSocket open handler
 def on_open(ws):
     logging.info("WebSocket connection opened")
+    get_output_config()
+    get_output_devices()
+
+
+# Get Current Output Config
+def get_output_config():
     volume_message = {
+        "id": 1,
         "jsonrpc": "2.0",
-        "method": "getOutputConfig",
-        "id": operation_id
+        "method": "getOutputConfig"
     }
     ws.send(json.dumps(volume_message))
+
+# Get Output Devices
+def get_output_devices():
+    message = {
+        "id": 1,
+        "jsonrpc": "2.0",
+        "method": "getOutputs",
+    }
+    ws.send(json.dumps(message))
+
+# Function to change output device
+def change_output_device(identifier, name):
+    if ws.sock.connected:
+        logging.debug(f"Change output device was called with identifier: {identifier} and name: {name}")
+        message = {
+            "id": 1,
+            "jsonrpc": "2.0",
+            "method": "setSelectedOutput",
+            "params": {
+                "identifier": identifier,
+                "name": name
+            }
+        }
+        ws.send(json.dumps(message))
+    else:
+        logging.error("Change output device was called, but the socket is closed")
 
 # Function to increase volume
 def increase_volume():
     if ws.sock.connected:
         logging.debug("Increase volume was called")
-        global operation_id, current_volume
+        global current_volume
         if current_volume is not None:
             new_volume = current_volume + step
             volume_message = {
+                "id": 1,
                 "jsonrpc": "2.0",
                 "method": "setOutputConfig",
-                "id": operation_id,
                 "params": {
                     "property": "Output Level",
                     "mixerID": "com.elgato.mix.local",
@@ -129,7 +175,6 @@ def increase_volume():
                 }
             }
             ws.send(json.dumps(volume_message))
-            operation_id += 1
     else:
         logging.error("Increase volume was called, but the socket is closed")
 
@@ -137,13 +182,13 @@ def increase_volume():
 def decrease_volume():
     if ws.sock.connected:
         logging.debug("Decrease volume was called") 
-        global operation_id, current_volume
+        global current_volume
         if current_volume is not None:
             new_volume = current_volume - step
             volume_message = {
+                "id": 1,
                 "jsonrpc": "2.0",
                 "method": "setOutputConfig",
-                "id": operation_id,
                 "params": {
                     "property": "Output Level",
                     "mixerID": "com.elgato.mix.local",
@@ -152,7 +197,6 @@ def decrease_volume():
                 }
             }
             ws.send(json.dumps(volume_message))
-            operation_id += 1
     else:
         logging.error("Decrease volume was called, but the socket is closed")
 
@@ -160,11 +204,11 @@ def decrease_volume():
 def toggle_mute():
     if ws.sock.connected:
         logging.debug("Toggle mute was called")
-        global operation_id, is_muted
+        global is_muted
         mute_message = {
+            "id": 1,
             "jsonrpc": "2.0",
             "method": "setOutputConfig",
-            "id": operation_id,
             "params": {
                 "property": "Output Mute",
                 "mixerID": "com.elgato.mix.local",
@@ -173,7 +217,6 @@ def toggle_mute():
             }
         }
         ws.send(json.dumps(mute_message))
-        operation_id += 1
     else:
         logging.error("Toggle mute was called, but the socket is closed")
 
