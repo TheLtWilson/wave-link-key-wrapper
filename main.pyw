@@ -1,4 +1,5 @@
 from pynput import keyboard
+from win32 import win32gui
 import json
 import websocket
 import time
@@ -6,11 +7,13 @@ import os
 import threading
 import logging
 import tkinter as tk
+import win32con
 
 # Parameters
 step = 2
 popup_duration = 2000
 websocket_url = "ws://127.0.0.1:1824"
+exp_fullscreen_taskbar_fix = True # Experimental fix for taskbar appearing in fullscreen apps, may cause the hotkey to not work in some apps/games
 
 # Variables
 current_volume = None
@@ -243,6 +246,13 @@ def show_popup_message(message, label):
     vol_label.pack(expand=True, fill="both")
 
     popup.after(popup_duration, popup.destroy)
+    
+    # Hacky way to make sure it doesn't make the taskbar appear in (most) fullscreen apps
+    if exp_fullscreen_taskbar_fix:        
+        hwnd = popup.winfo_id()
+        style = win32gui.GetWindowLong(hwnd, win32con.GWL_EXSTYLE)
+        style = style | win32con.WS_EX_TOOLWINDOW
+        win32gui.SetWindowLong(hwnd, win32con.GWL_EXSTYLE, style)
 
 # WebSocket setup
 ws = websocket.WebSocketApp(
