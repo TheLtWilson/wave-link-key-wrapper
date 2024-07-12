@@ -98,7 +98,10 @@ def on_message(ws, message):
     elif "method" in response and response["method"] == "outputVolumeChanged":
         current_volume = response["params"]["value"]
         logging.debug(f"Volume changed to: {current_volume}")
-        root.after(0, show_popup_message, f"󰕾 {current_volume}", "Output Volume")
+        if is_muted:
+            root.after(0, show_popup_message, f"󰖁 {current_volume}", "Output Volume")
+        else:
+            root.after(0, show_popup_message, f"󰕾 {current_volume}", "Output Volume")
     elif "method" in response and response["method"] == "selectedOutputChanged":
         logging.debug(f"Output changed to identifier: {response['params']['value']}")
         # For my specific setup these are the identifiers for my speakers and headphones
