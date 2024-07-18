@@ -13,10 +13,12 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 # Classes
 class Mixer:
+    # These should not change.
     Local = "com.elgato.mix.local"
     Stream = "com.elgato.mix.stream"
 
 class Input:
+    # If you have more inputs, like an additional microphone, you should add and label them here
     System = "PCM_OUT_01_V_00_SD2"
     Music = "PCM_OUT_01_V_02_SD3"
     Browser = "PCM_OUT_01_V_04_SD4"
@@ -25,6 +27,11 @@ class Input:
     Game = "PCM_OUT_01_V_10_SD7"
     Aux1 = "PCM_OUT_01_V_12_SD8"
     Aux2 = "PCM_OUT_01_V_14_SD9"
+
+class Outputs:
+    # You can find your identifiers by running the script and checking the logs for "available outputs" or "selected output"
+    Speakers = "HDAUDIO#FUNC_01&VEN_10EC&DEV_1168&SUBSYS_104387C5&REV_1001#5&32F1D1AA&0&0001#{6994AD04-93EF-11D0-A3CC-00A0C9223196}\\ELINEOUTWAVE"
+    Headphones = "PCM_OUT_01_C_00_SD1"
 
 # Variables
 current_volume = None
@@ -111,9 +118,9 @@ def on_message(ws, message):
         logging.debug(f"Output changed to identifier: {response['params']['value']}")
         # For my specific setup these are the identifiers for my speakers and headphones
         # You can find your identifiers by running the script and checking the logs for "available outputs" or "selected output"
-        if response["params"]["value"] == "HDAUDIO#FUNC_01&VEN_10EC&DEV_1168&SUBSYS_104387C5&REV_1001#5&32F1D1AA&0&0001#{6994AD04-93EF-11D0-A3CC-00A0C9223196}\\ELINEOUTWAVE":
+        if response["params"]["value"] == Outputs.Speakers:
             showPopup("󰓃 Speakers", "Output Changed")
-        elif response["params"]["value"] == "PCM_OUT_01_C_00_SD1":
+        elif response["params"]["value"] == Outputs.Headphones:
             showPopup(" Headphones", "Output Changed")
 
 # WebSocket error handler
