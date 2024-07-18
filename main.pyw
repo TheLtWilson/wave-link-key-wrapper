@@ -1,26 +1,29 @@
 from pynput import keyboard
-from win32 import win32gui
+from configparser import ConfigParser
 import json
 import websocket
 import time
 import os
 import threading
 import logging
-import tkinter as tk
-import win32con
 
-# Parameters
-step = 2
-popup_duration = 2000
-websocket_url = "ws://127.0.0.1:1824"
-exp_fullscreen_taskbar_fix = True # Experimental fix for taskbar appearing in fullscreen apps, may cause the hotkey to not work in some apps/games
+# Change working directory to script location
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
 
 # Variables
 current_volume = None
 is_muted = None
+config = ConfigParser()
 
-# Change working directory to script location
-os.chdir(os.path.dirname(os.path.abspath(__file__)))
+# Read config file
+config.read("config.ini")
+
+# Set variables from config
+step = int(config.get("main", "step"))
+popup_duration = int(config.get("main", "popup_duration"))
+websocket_url = str(config.get("main", "websocket_url"))
+exp_fullscreen_taskbar_fix = bool(config.get("experimental", "fullscreen_taskbar_fix"))
 
 # Initialize logging
 logging.basicConfig(
