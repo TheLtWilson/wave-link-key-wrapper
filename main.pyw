@@ -1,5 +1,6 @@
 from pynput import keyboard
 from configparser import ConfigParser
+from popup import showPopup, popupRoot
 import json
 import websocket
 import time
@@ -47,10 +48,6 @@ logging.basicConfig(
     filemode="w"
 )
 
-# Initialize Tkinter
-root = tk.Tk()
-root.withdraw()
-
 # WebSocket connection handler
 def on_message(ws, message):
     global current_volume, is_muted
@@ -74,9 +71,9 @@ def on_message(ws, message):
         is_muted = response["params"]["value"]
         logging.debug(f"Mute changed to: {is_muted}")
         if is_muted:
-            root.after(0, show_popup_message, f"󰖁 Muted ({current_volume})", "Output Volume")
+            showPopup(f"󰖁 Muted ({current_volume})", "Output Volume")
         else:
-            root.after(0, show_popup_message, f"󰕾 Unmuted ({current_volume})", "Output Volume")
+            showPopup(f"󰕾 Unmuted ({current_volume})", "Output Volume")
     # Input Volumes
     elif "method" in response and response["method"] == "inputVolumeChanged":
         # We only want to show the popup for one mixer, in this case the local mixer.
@@ -85,41 +82,41 @@ def on_message(ws, message):
             match response["params"]["identifier"]:
                 case Input.System:
                     logging.debug(f"System volume changed to: {response['params']['value']}")
-                    root.after(0, show_popup_message, f"󰕾 {response['params']['value']}", "System Volume")
+                    showPopup(f"󰕾 {response['params']['value']}", "System Volume")
                 case Input.Music:
                     logging.debug(f"Music volume changed to: {response['params']['value']}")
-                    root.after(0, show_popup_message, f"󰕾 {response['params']['value']}", "Music Volume")
+                    showPopup(f"󰕾 {response['params']['value']}", "Music Volume")
                 case Input.Browser:
                     logging.debug(f"Browser volume changed to: {response['params']['value']}")
-                    root.after(0, show_popup_message, f"󰕾 {response['params']['value']}", "Browser Volume")
+                    showPopup(f"󰕾 {response['params']['value']}", "Browser Volume")
                 case Input.VoiceChat:
                     logging.debug(f"Voice Chat volume changed to: {response['params']['value']}")
-                    root.after(0, show_popup_message, f"󰕾 {response['params']['value']}", "Voice Chat Volume")
+                    showPopup(f"󰕾 {response['params']['value']}", "Voice Chat Volume")
                 case Input.SFX:
                     logging.debug(f"SFX volume changed to: {response['params']['value']}")
-                    root.after(0, show_popup_message, f"󰕾 {response['params']['value']}", "SFX Volume")
+                    showPopup(f"󰕾 {response['params']['value']}", "SFX Volume")
                 case Input.Game:
                     logging.debug(f"Game volume changed to: {response['params']['value']}")
-                    root.after(0, show_popup_message, f"󰕾 {response['params']['value']}", "Game Volume")
+                    showPopup(f"󰕾 {response['params']['value']}", "Game Volume")
                 case Input.Aux1:
                     logging.debug(f"Aux 1 volume changed to: {response['params']['value']}")
-                    root.after(0, show_popup_message, f"󰕾 {response['params']['value']}", "Aux 1 Volume")
+                    showPopup(f"󰕾 {response['params']['value']}", "Aux 1 Volume")
                 case Input.Aux2:
                     logging.debug(f"Aux 2 volume changed to: {response['params']['value']}")
-                    root.after(0, show_popup_message, f"󰕾 {response['params']['value']}", "Aux 2 Volume")
+                    showPopup(f"󰕾 {response['params']['value']}", "Aux 2 Volume")
     # Output Volumes
     elif "method" in response and response["method"] == "outputVolumeChanged":
         current_volume = response["params"]["value"]
         logging.debug(f"Volume changed to: {current_volume}")
-        root.after(0, show_popup_message, f"󰕾 {current_volume}", "Output Volume")
+        showPopup(f"󰕾 {current_volume}", "Output Volume")
     elif "method" in response and response["method"] == "selectedOutputChanged":
         logging.debug(f"Output changed to identifier: {response['params']['value']}")
         # For my specific setup these are the identifiers for my speakers and headphones
         # You can find your identifiers by running the script and checking the logs for "available outputs" or "selected output"
         if response["params"]["value"] == "HDAUDIO#FUNC_01&VEN_10EC&DEV_1168&SUBSYS_104387C5&REV_1001#5&32F1D1AA&0&0001#{6994AD04-93EF-11D0-A3CC-00A0C9223196}\\ELINEOUTWAVE":
-            root.after(0, show_popup_message, "󰓃 Speakers", "Output Changed")
+            showPopup("󰓃 Speakers", "Output Changed")
         elif response["params"]["value"] == "PCM_OUT_01_C_00_SD1":
-            root.after(0, show_popup_message, " Headphones", "Output Changed")
+            showPopup(" Headphones", "Output Changed")
 
 # WebSocket error handler
 def on_error(ws, error):
@@ -273,37 +270,6 @@ def toggle_output_mute(mixer: Mixer):
     else:
         logging.error("Toggle mute was called, but the socket is closed")
 
-# Function to show volume popup
-def show_popup_message(message, label):
-    popup = tk.Toplevel(root)
-    popup.overrideredirect(True)
-    popup.geometry("220x80+50+50")  # width x height, pos x + pos y
-    popup.attributes("-topmost", True)  # Ensure the popup appears on top
-    
-    # Dark mode styles
-    background_color = "#333333"
-    foreground_color = "#FFFFFF"
-    border_color = "#555555"
-    
-    popup.config(bg=border_color)
-    inner_frame = tk.Frame(popup, bg=background_color, bd=1, relief="solid")
-    inner_frame.pack(expand=True, fill="both", padx=2, pady=2)
-    
-    type_label = tk.Label(inner_frame, text=str(label), font=("SpaceMono Nerd Font", 12), bg=background_color, fg=foreground_color)
-    vol_label = tk.Label(inner_frame, text=str(message), font=("SpaceMono Nerd Font", 16, "bold"), bg=background_color, fg=foreground_color)
-
-    type_label.pack(expand=True, fill="both")
-    vol_label.pack(expand=True, fill="both")
-
-    popup.after(popup_duration, popup.destroy)
-    
-    # Hacky way to make sure it doesn't make the taskbar appear in (most) fullscreen apps
-    if exp_fullscreen_taskbar_fix:        
-        hwnd = popup.winfo_id()
-        style = win32gui.GetWindowLong(hwnd, win32con.GWL_EXSTYLE)
-        style = style | win32con.WS_EX_TOOLWINDOW
-        win32gui.SetWindowLong(hwnd, win32con.GWL_EXSTYLE, style)
-
 # WebSocket setup
 ws = websocket.WebSocketApp(
     websocket_url, 
@@ -352,4 +318,5 @@ listener.start()
 # Start WebSocket listener
 if __name__ == "__main__":
     logging.info("Script started")
-    tk.mainloop()
+    # Start the Tkinter main loop for the volume popups
+    popupRoot.mainloop()
