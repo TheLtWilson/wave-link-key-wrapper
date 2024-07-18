@@ -65,7 +65,7 @@ def on_message(ws, message):
             is_muted = local_mixer[0]
             current_volume = local_mixer[1]
             if current_volume is not None:
-                logging.debug(f"Connection received current volume: {current_volume}")
+                logging.debug(f"Connection received, current volume: {current_volume}")
         elif "outputs" in response["result"]:
             available_outputs = response["result"]["outputs"]
             selected_output = response["result"]["selectedOutput"]
@@ -73,12 +73,18 @@ def on_message(ws, message):
             logging.debug(f"Selected output: {json.dumps(selected_output)}")
     # Mute Status
     elif "method" in response and response["method"] == "outputMuteChanged":
-        is_muted = response["params"]["value"]
-        logging.debug(f"Mute changed to: {is_muted}")
-        if is_muted:
-            showPopup(f"󰖁 Muted ({current_volume})", "Output Volume")
+        if response["params"]["mixerID"] == Mixer.Local:
+            is_muted = response["params"]["value"]
+            logging.debug(f"Mute changed to: {is_muted}")
+            if is_muted:
+                showPopup(f"󰖁 Muted ({current_volume})", "Output Volume")
+            else:
+                showPopup(f"󰕾 Unmuted ({current_volume})", "Output Volume")
         else:
-            showPopup(f"󰕾 Unmuted ({current_volume})", "Output Volume")
+            logging.debug(f"Mute changed on mixer: {response['params']['mixerID']} - {response['params']['value']}")
+    # Input Mute Status
+    elif "method" in response and response["method"] == "inputMuteChanged":
+        logging.debug(f"Input mute changed on mixer: {response['params']['mixerID']}, identifier: {response['params']['identifier']} - {response['params']['value']}")
     # Input Volumes
     elif "method" in response and response["method"] == "inputVolumeChanged":
         # We only want to show the popup for one mixer, in this case the local mixer.
@@ -111,9 +117,13 @@ def on_message(ws, message):
                     showPopup(f"󰕾 {response['params']['value']}", "Aux 2 Volume")
     # Output Volumes
     elif "method" in response and response["method"] == "outputVolumeChanged":
-        current_volume = response["params"]["value"]
-        logging.debug(f"Volume changed to: {current_volume}")
-        showPopup(f"󰕾 {current_volume}", "Output Volume")
+        if response["params"]["mixerID"] == Mixer.Local:
+            current_volume = response["params"]["value"]
+            logging.debug(f"Volume changed to: {current_volume}")
+            showPopup(f"󰕾 {current_volume}", "Output Volume")
+        else:
+            logging.debug(f"Volume changed on mixer: {response['params']['mixerID']} - {response['params']['value']}")
+    # Output Changes
     elif "method" in response and response["method"] == "selectedOutputChanged":
         logging.debug(f"Output changed to identifier: {response['params']['value']}")
         # For my specific setup these are the identifiers for my speakers and headphones
