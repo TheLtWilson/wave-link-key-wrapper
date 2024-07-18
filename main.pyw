@@ -36,9 +36,7 @@ config.read("config.ini")
 
 # Set variables from config
 step = int(config.get("main", "step"))
-popup_duration = int(config.get("main", "popup_duration"))
 websocket_url = str(config.get("main", "websocket_url"))
-exp_fullscreen_taskbar_fix = bool(config.get("experimental", "fullscreen_taskbar_fix"))
 
 # Initialize logging
 logging.basicConfig(
