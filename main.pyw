@@ -10,6 +10,20 @@ import logging
 # Change working directory to script location
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
+# Classes
+class Mixer:
+    Local = "com.elgato.mix.local"
+    Stream = "com.elgato.mix.stream"
+
+class Input:
+    System = "PCM_OUT_01_V_00_SD2"
+    Music = "PCM_OUT_01_V_02_SD3"
+    Browser = "PCM_OUT_01_V_04_SD4"
+    VoiceChat = "PCM_OUT_01_V_06_SD5"
+    SFX = "PCM_OUT_01_V_08_SD6"
+    Game = "PCM_OUT_01_V_10_SD7"
+    Aux1 = "PCM_OUT_01_V_12_SD8"
+    Aux2 = "PCM_OUT_01_V_14_SD9"
 
 # Variables
 current_volume = None
@@ -65,38 +79,34 @@ def on_message(ws, message):
             root.after(0, show_popup_message, f"󰕾 Unmuted ({current_volume})", "Output Volume")
     # Input Volumes
     elif "method" in response and response["method"] == "inputVolumeChanged":
-        # System Input Volume
-        if response["params"]["identifier"] == "PCM_OUT_01_V_00_SD2" and response["params"]["mixerID"] == "com.elgato.mix.local":
-            logging.debug(f"System volume changed to: {response['params']['value']}")
-            root.after(0, show_popup_message, f"󰕾 {response['params']['value']}", "System Volume")
-        # Music Input Volume
-        elif response["params"]["identifier"] == "PCM_OUT_01_V_02_SD3" and response["params"]["mixerID"] == "com.elgato.mix.local":
-            logging.debug(f"Music volume changed to: {response['params']['value']}")
-            root.after(0, show_popup_message, f"󰕾 {response['params']['value']}", "Music Volume")
-        # Browser Input Volume
-        elif response["params"]["identifier"] == "PCM_OUT_01_V_04_SD4" and response["params"]["mixerID"] == "com.elgato.mix.local":
-            logging.debug(f"Browser volume changed to: {response['params']['value']}")
-            root.after(0, show_popup_message, f"󰕾 {response['params']['value']}", "Browser Volume")
-        # Voice Chat Input Volume
-        elif response["params"]["identifier"] == "PCM_OUT_01_V_06_SD5" and response["params"]["mixerID"] == "com.elgato.mix.local":
-            logging.debug(f"Voice Chat volume changed to: {response['params']['value']}")
-            root.after(0, show_popup_message, f"󰕾 {response['params']['value']}", "Voice Chat Volume")
-        # SFX Input Volume
-        elif response["params"]["identifier"] == "PCM_OUT_01_V_08_SD6" and response["params"]["mixerID"] == "com.elgato.mix.local":
-            logging.debug(f"SFX volume changed to: {response['params']['value']}")
-            root.after(0, show_popup_message, f"󰕾 {response['params']['value']}", "SFX Volume")
-        # Game Input Volume
-        elif response["params"]["identifier"] == "PCM_OUT_01_V_10_SD7" and response["params"]["mixerID"] == "com.elgato.mix.local":
-            logging.debug(f"Game volume changed to: {response['params']['value']}")
-            root.after(0, show_popup_message, f"󰕾 {response['params']['value']}", "Game Volume")
-        # Aux 1 Input Volume
-        elif response["params"]["identifier"] == "PCM_OUT_01_V_12_SD8" and response["params"]["mixerID"] == "com.elgato.mix.local":
-            logging.debug(f"Aux 1 volume changed to: {response['params']['value']}")
-            root.after(0, show_popup_message, f"󰕾 {response['params']['value']}", "Aux 1 Volume")
-        # Aux 2 Input Volume
-        elif response["params"]["identifier"] == "PCM_OUT_01_V_14_SD9" and response["params"]["mixerID"] == "com.elgato.mix.local":
-            logging.debug(f"Aux 2 volume changed to: {response['params']['value']}")
-            root.after(0, show_popup_message, f"󰕾 {response['params']['value']}", "Aux 2 Volume")
+        # We only want to show the popup for one mixer, in this case the local mixer.
+        # This is so we don't get multiple popups for the same volume change - notibly when faders are linked.
+        if response["params"]["mixerID"] == Mixer.Local:
+            match response["params"]["identifier"]:
+                case Input.System:
+                    logging.debug(f"System volume changed to: {response['params']['value']}")
+                    root.after(0, show_popup_message, f"󰕾 {response['params']['value']}", "System Volume")
+                case Input.Music:
+                    logging.debug(f"Music volume changed to: {response['params']['value']}")
+                    root.after(0, show_popup_message, f"󰕾 {response['params']['value']}", "Music Volume")
+                case Input.Browser:
+                    logging.debug(f"Browser volume changed to: {response['params']['value']}")
+                    root.after(0, show_popup_message, f"󰕾 {response['params']['value']}", "Browser Volume")
+                case Input.VoiceChat:
+                    logging.debug(f"Voice Chat volume changed to: {response['params']['value']}")
+                    root.after(0, show_popup_message, f"󰕾 {response['params']['value']}", "Voice Chat Volume")
+                case Input.SFX:
+                    logging.debug(f"SFX volume changed to: {response['params']['value']}")
+                    root.after(0, show_popup_message, f"󰕾 {response['params']['value']}", "SFX Volume")
+                case Input.Game:
+                    logging.debug(f"Game volume changed to: {response['params']['value']}")
+                    root.after(0, show_popup_message, f"󰕾 {response['params']['value']}", "Game Volume")
+                case Input.Aux1:
+                    logging.debug(f"Aux 1 volume changed to: {response['params']['value']}")
+                    root.after(0, show_popup_message, f"󰕾 {response['params']['value']}", "Aux 1 Volume")
+                case Input.Aux2:
+                    logging.debug(f"Aux 2 volume changed to: {response['params']['value']}")
+                    root.after(0, show_popup_message, f"󰕾 {response['params']['value']}", "Aux 2 Volume")
     # Output Volumes
     elif "method" in response and response["method"] == "outputVolumeChanged":
         current_volume = response["params"]["value"]
@@ -126,8 +136,7 @@ def on_open(ws):
     get_output_config()
     get_output_devices()
 
-
-# Get Current Output Config
+# Function to get output configuration
 def get_output_config():
     volume_message = {
         "id": 1,
@@ -136,7 +145,7 @@ def get_output_config():
     }
     ws.send(json.dumps(volume_message))
 
-# Get Output Devices
+# Function to get available output devices
 def get_output_devices():
     message = {
         "id": 1,
@@ -145,84 +154,122 @@ def get_output_devices():
     }
     ws.send(json.dumps(message))
 
-# Function to change output device
-def change_output_device(identifier, name):
+# Function to change output device (use get_output_devices to get the identifier and name)
+def change_output_device(identifier: str, name: str):
     if ws.sock.connected:
-        logging.debug(f"Change output device was called with identifier: {identifier} and name: {name}")
-        message = {
-            "id": 1,
-            "jsonrpc": "2.0",
-            "method": "setSelectedOutput",
-            "params": {
-                "identifier": identifier,
-                "name": name
+        try:
+            logging.debug(f"Change output device was called with identifier: {identifier} and name: {name}")
+            message = {
+                "id": 1,
+                "jsonrpc": "2.0",
+                "method": "setSelectedOutput",
+                "params": {
+                    "identifier": identifier,
+                    "name": name
+                }
             }
-        }
-        ws.send(json.dumps(message))
+            ws.send(json.dumps(message))
+        except Exception as e:
+            logging.error(f"Error changing output device: {e}")
     else:
         logging.error("Change output device was called, but the socket is closed")
 
-# Function to increase volume
-def increase_volume():
-    if ws.sock.connected:
-        logging.debug("Increase volume was called")
-        global current_volume
-        if current_volume is not None:
-            new_volume = current_volume + step
-            volume_message = {
-                "id": 1,
-                "jsonrpc": "2.0",
-                "method": "setOutputConfig",
-                "params": {
-                    "property": "Output Level",
-                    "mixerID": "com.elgato.mix.local",
-                    "value": new_volume,
-                    "forceLink": False
+# Function to increase output volume by configured step
+def increase_output_volume(mixer: Mixer):
+    # Only run if the socket is connected and when a mixer is provided
+    if ws.sock.connected and mixer:
+        try:
+            logging.debug(f"Increase output volume was called on mixer: {mixer}")
+            global current_volume
+            if current_volume is not None:
+                new_volume = current_volume + step
+                volume_message = {
+                    "id": 1,
+                    "jsonrpc": "2.0",
+                    "method": "setOutputConfig",
+                    "params": {
+                        "property": "Output Level",
+                        "mixerID": mixer,
+                        "value": new_volume,
+                        "forceLink": False
+                    }
                 }
-            }
-            ws.send(json.dumps(volume_message))
+                ws.send(json.dumps(volume_message))
+        except Exception as e:
+            logging.error(f"Error increasing output volume: {e}")
     else:
         logging.error("Increase volume was called, but the socket is closed")
 
-# Function to decrease volume
-def decrease_volume():
-    if ws.sock.connected:
-        logging.debug("Decrease volume was called") 
-        global current_volume
-        if current_volume is not None:
-            new_volume = current_volume - step
+# Function to decrease output volume by configured step
+def decrease_output_volume(mixer: Mixer):
+    # Only run if the socket is connected and when a mixer is provided
+    if ws.sock.connected and mixer:
+        try:
+            logging.debug(f"Decrease output volume was called on mixer: {mixer}") 
+            global current_volume
+            if current_volume is not None:
+                new_volume = current_volume - step
+                volume_message = {
+                    "id": 1,
+                    "jsonrpc": "2.0",
+                    "method": "setOutputConfig",
+                    "params": {
+                        "property": "Output Level",
+                        "mixerID": mixer,
+                        "value": new_volume,
+                        "forceLink": False
+                    }
+                }
+                ws.send(json.dumps(volume_message))
+        except Exception as e:
+            logging.error(f"Error decreasing output volume: {e}")
+    else:
+        logging.error("Decrease output volume was called, but the socket is closed")
+
+# Function to set output volume to a specific value
+def set_output_volume(mixer: Mixer, volume: int):
+    # Only run if the socket is connected and when a mixer is provided
+    if ws.sock.connected and mixer:
+        try:
+            logging.debug(f"Set output volume was called on mixer: {mixer}")
             volume_message = {
                 "id": 1,
                 "jsonrpc": "2.0",
                 "method": "setOutputConfig",
                 "params": {
                     "property": "Output Level",
-                    "mixerID": "com.elgato.mix.local",
-                    "value": new_volume,
+                    "mixerID": mixer,
+                    "value": volume,
                     "forceLink": False
                 }
             }
             ws.send(json.dumps(volume_message))
+        except Exception as e:
+            logging.error(f"Error setting output volume: {e}")
     else:
-        logging.error("Decrease volume was called, but the socket is closed")
+        logging.error("Set output volume was called, but the socket is closed")
 
-# Function to toggle mute
-def toggle_mute():
-    if ws.sock.connected:
-        logging.debug("Toggle mute was called")
-        global is_muted
-        mute_message = {
-            "id": 1,
-            "jsonrpc": "2.0",
-            "method": "setOutputConfig",
-            "params": {
-                "property": "Output Mute",
-                "mixerID": "com.elgato.mix.local",
-                "value": not is_muted,
-                "forceLink": False
+# Function to set toggle the output mute state
+def toggle_output_mute(mixer: Mixer):
+    # Only run if the socket is connected and when a mixer is provided
+    if ws.sock.connected and mixer:
+        try:
+            logging.debug("Toggle mute was called")
+            global is_muted
+            mute_message = {
+                "id": 1,
+                "jsonrpc": "2.0",
+                "method": "setOutputConfig",
+                "params": {
+                    "property": "Output Mute",
+                    "mixerID": mixer,
+                    "value": not is_muted,
+                    "forceLink": False
+                }
             }
-        }
-        ws.send(json.dumps(mute_message))
+            ws.send(json.dumps(mute_message))
+        except Exception as e:
+            logging.error(f"Error toggling output mute: {e}")
     else:
         logging.error("Toggle mute was called, but the socket is closed")
 
@@ -290,11 +337,11 @@ ws.thread.start()
 def on_press(key):
     try:
         if key == keyboard.Key.f13:
-            increase_volume()
+            increase_output_volume(Mixer.Local)
         elif key == keyboard.Key.f14:
-            decrease_volume()
+            decrease_output_volume(Mixer.Local)
         elif key == keyboard.Key.f15:
-            toggle_mute()
+            toggle_output_mute(Mixer.Local)
     except Exception as e:
         logging.error(f"Error handling key press: {e}")
     
