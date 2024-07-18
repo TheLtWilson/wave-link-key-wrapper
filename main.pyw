@@ -28,10 +28,16 @@ class Input:
     Aux1 = "PCM_OUT_01_V_12_SD8"
     Aux2 = "PCM_OUT_01_V_14_SD9"
 
-class Outputs:
-    # You can find your identifiers by running the script and checking the logs for "available outputs" or "selected output"
-    Speakers = "HDAUDIO#FUNC_01&VEN_10EC&DEV_1168&SUBSYS_104387C5&REV_1001#5&32F1D1AA&0&0001#{6994AD04-93EF-11D0-A3CC-00A0C9223196}\\ELINEOUTWAVE"
-    Headphones = "PCM_OUT_01_C_00_SD1"
+class Output:
+    # You can find your identifiers and their names by running the script and checking the logs for "available outputs" or "selected output"
+    Speakers = {
+        "identifier": "HDAUDIO#FUNC_01&VEN_10EC&DEV_1168&SUBSYS_104387C5&REV_1001#5&32F1D1AA&0&0001#{6994AD04-93EF-11D0-A3CC-00A0C9223196}\\ELINEOUTWAVE",
+        "name": "Speakers (High Definition Audio Device)"
+    }
+    Headphones = {
+        "identifier": "PCM_OUT_01_C_00_SD1",
+        "name": "Headphones (Elgato Wave:3)"
+    }
 
 # Variables
 current_volume = None
@@ -128,9 +134,9 @@ def on_message(ws, message):
         logging.debug(f"Output changed to identifier: {response['params']['value']}")
         # For my specific setup these are the identifiers for my speakers and headphones
         # You can find your identifiers by running the script and checking the logs for "available outputs" or "selected output"
-        if response["params"]["value"] == Outputs.Speakers:
+        if response["params"]["value"] == Output.Speakers["identifier"]:
             showPopup("󰓃 Speakers", "Output Changed")
-        elif response["params"]["value"] == Outputs.Headphones:
+        elif response["params"]["value"] == Output.Headphones["identifier"]:
             showPopup(" Headphones", "Output Changed")
 
 # WebSocket error handler
@@ -169,18 +175,18 @@ def get_output_devices():
 # Function to change output device.
 # This is not used in my use case, but can be used to set the current output device to a specific device.
 # You can get your available output devices by running the script and checking the logs for "available outputs" or "selected output"
-def change_output_device(identifier: str, name: str):
+def change_output_device(device: Output):
     # Only run if the socket is connected
     if ws.sock.connected:
         try:
-            logging.debug(f"Change output device was called with identifier: {identifier} and name: {name}")
+            logging.debug(f"Change output device was called with identifier: {device['identifier']} and name: {device['name']}")
             message = {
                 "id": 1,
                 "jsonrpc": "2.0",
                 "method": "setSelectedOutput",
                 "params": {
-                    "identifier": identifier,
-                    "name": name
+                    "identifier": device["identifier"],
+                    "name": device["name"]
                 }
             }
             ws.send(json.dumps(message))
