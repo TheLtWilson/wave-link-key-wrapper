@@ -13,7 +13,7 @@ Elgato leaves a websocket open, currently on port `1824`, that is intended to be
 > [!NOTE]
 > If you just want to use the script to control Wave Link and you **remove** the popup functionality, it *should* be compatible with macOS. I don't have a machine to test this on, so take this with a grain of salt.
 
-* You will need to have Elgato's Wave Link software installed for this to work. This script works as of the version: `1.10.1 (2293)`
+* You will need to have Elgato's Wave Link software installed for this to work. This script works as of the version: `1.11.1 (2824)`
 
 * A "nerd font" is required to properly display icons. I use [SpaceMono](https://github.com/ryanoasis/nerd-fonts/releases/download/v3.2.1/SpaceMono.zip), but you can change the font to one of your chosing here: [nerdfonts.com](https://nerdfonts.com)
 
