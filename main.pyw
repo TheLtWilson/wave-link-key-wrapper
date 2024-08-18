@@ -131,13 +131,14 @@ def on_message(ws, message):
             logging.debug(f"Volume changed on mixer: {response['params']['mixerID']} - {response['params']['value']}")
     # Output Changes
     elif "method" in response and response["method"] == "selectedOutputChanged":
-        logging.debug(f"Output changed to identifier: {response['params']['value']}")
+        logging.debug(f"Output on mixer {response["params"]["mixerID"]} changed to identifier: {response['params']["identifier"]}")
         # For my specific setup these are the identifiers for my speakers and headphones
         # You can find your identifiers by running the script and checking the logs for "available outputs" or "selected output"
-        if response["params"]["value"] == Output.Speakers["identifier"]:
-            showPopup("󰓃 Speakers", "Output Changed")
-        elif response["params"]["value"] == Output.Headphones["identifier"]:
-            showPopup(" Headphones", "Output Changed")
+        if response["params"]["mixerID"] == Mixer.Local:
+            if response["params"]["identifier"] == Output.Speakers["identifier"]:
+                showPopup("󰓃 Speakers", "Output Changed")
+            elif response["params"]["identifier"] == Output.Headphones["identifier"]:
+                showPopup(" Headphones", "Output Changed")
 
 # WebSocket error handler
 def on_error(ws, error):
